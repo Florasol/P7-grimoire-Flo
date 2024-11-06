@@ -1,6 +1,22 @@
 const Book = require('../models/book');
 const fs = require('fs');
 
+exports.getAllBooks = (req, res, next) => {
+    Book.find().then(
+    (books) => {
+        res.status(200).json(books);
+        console.log('Liste de livre telechargee');
+        console.log(books.length);
+    }
+    ).catch(
+    (error) => {
+        res.status(400).json({
+        error: error
+        });
+    }
+    );
+};
+
 exports.createBook = (req, res, next) => {
   const bookObject = JSON.parse(req.body.book);
   delete bookObject._id;
@@ -18,7 +34,7 @@ exports.createBook = (req, res, next) => {
   
 exports.getOneBook = (req, res, next) => {
     Book.findOne({
-    _id: req.params.id
+    _id: req.params.id // req.params.id est le paramètre id dans l'URL
     }).then(
     (book) => {
         res.status(200).json(book);
@@ -30,6 +46,74 @@ exports.getOneBook = (req, res, next) => {
         });
     }
     );
+};
+
+
+  exports.rateBook = (req, res, next) => {
+    console.log("rateBook controller called");
+    const ratingObject = { ...req.body, grade: req.body.rating }; // Stockage de la requête dans une constante
+    delete ratingObject._id; // Suppression du faux _id envoyé par le front
+
+    // Vérification que la note est dans les limites autorisées
+    if (req.body.rating >= 0 && req.body.rating <= 5) {
+        console.log("Rating is valid:", req.body.rating);
+
+        Book.findOne({ _id: req.params.id }) // Recherche du livre auquel on veut ajouter une note
+            .then(book => {
+                console.log("Book found:", book);
+
+                // Récupération des notes existantes et des userIds
+                const newRatings = book.ratings;
+                const userIdArray = newRatings.map(rating => rating.userId);
+
+                // Vérification si l'utilisateur a déjà noté ce livre
+                if (userIdArray.includes(req.auth.userId)) {
+                    console.log("User has already rated this book.");
+                    return res.status(403).json({ message: 'Not authorized' });
+                } else {
+                    // Ajout de la nouvelle note
+                    newRatings.push(ratingObject);
+                    console.log("New ratings array:", newRatings);
+
+                    // Calcul de la moyenne des notes
+                    const grades = newRatings.map(rating => rating.grade);
+                    const averageGrades = Math.round(grades.reduce((acc, grade) => acc + grade, 0) / grades.length);
+                    console.log("Average grade calculated:", averageGrades);  // Affichage de la moyenne calculée
+
+                    // Mise à jour du livre avec les nouvelles notes et la nouvelle moyenne
+                    Book.updateOne(
+                        { _id: req.params.id }, 
+                        { ratings: newRatings, averageRating: averageGrades, _id: req.params.id }
+                        )
+                        .then(() => {
+                            console.log("Book updated successfully");
+                            res.status(200).json({ message: 'Les livres les mieux notés ont été actualisés avec succès !' });
+                        })
+                        .catch(error => {
+                            console.log("Error updating book:", error); // Log d'erreur si échec de la mise à jour
+                            res.status(400).json({ error: 'Erreur lors de l\'actualisation', details: error });
+                        });
+                }
+            })
+            .catch(error => {
+                console.log("Error finding book:", error); // Log d'erreur si échec de la recherche du livre
+                res.status(404).json({ error });
+            });
+    } else {
+        console.log("Invalid rating received:", req.body.rating); // Log si la note n'est pas valide
+        res.status(400).json({ message: 'La note doit être comprise entre 1 et 5' });
+    }
+};
+
+exports.getBestRatedBooks = (req, res, next) => {
+    Book.find().sort({ averageRating: -1 }).limit(3) // Requête à la base de données: Trie dans l'ordre décroissant, limité à 3 livres
+    .then(topRatedBooks => { // le résultat de la requête est placé dans la variable topRatedBooks
+      res.status(200).json(topRatedBooks);
+    })
+    .catch(error => {
+      console.error(error);
+      res.status(500).json({ error: 'Une erreur est survenue.' });
+    });
 };
 
 exports.modifyBook = (req, res, next) => {
@@ -71,18 +155,4 @@ exports.deleteBook = (req, res, next) => {
       .catch( error => {
           res.status(500).json({ error });
       });
-};
-
-exports.getAllBooks = (req, res, next) => {
-    Book.find().then(
-    (books) => {
-        res.status(200).json(books);
-    }
-    ).catch(
-    (error) => {
-        res.status(400).json({
-        error: error
-        });
-    }
-    );
 };

@@ -1,5 +1,4 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -8,11 +7,17 @@ const bodyParser = require('body-parser');
 const bookRoutes = require('./routes/book'); 
 const userRoutes = require('./routes/user');
 
-mongoose.connect('mongodb+srv://floralusoler:RjVIcpqHvLqP8tCd@clusteroc.o6o5d.mongodb.net/?retryWrites=true&w=majority&appName=ClusterOC')
-  .then(() => console.log('Connexion à MongoDB réussie !'))
-  .catch(() => console.log('Connexion à MongoDB échouée !'));
+mongoose.connect('mongodb+srv://floralusoler:RjVIcpqHvLqP8tCd@clusteroc.o6o5d.mongodb.net/?retryWrites=true&w=majority&appName=ClusterOC',
+{ useNewUrlParser: true,
+  useUnifiedTopology: true })
+.then(() => console.log('Connexion à MongoDB réussie !'))
+.catch(() => console.log('Connexion à MongoDB échouée !'));
 
 const app = express();
+// Extrait le corps JSON des requêtes POST
+app.use(express.json());
+app.use(bodyParser.json());
+
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');

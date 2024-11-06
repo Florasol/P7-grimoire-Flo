@@ -46,6 +46,10 @@ function BookForm({ book, validate }) {
   const onSubmit = async (data) => {
     // When we create a new book
     if (!book) {
+      // Vérifier si l'année est un nombre
+      if (isNaN(data.year) || data.year.trim() === '') {
+        alert('L\'année de publication doit être un nombre valide.');
+      }
       if (!data.file[0]) {
         alert('Vous devez ajouter une image');
       }

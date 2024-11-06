@@ -5,18 +5,20 @@ const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 
 exports.signup = (req, res, next) => {
+
     bcrypt.hash(req.body.password, 10) // fonction qui crypte le mdp (10 fois exécution algo de hachage)
       .then(hash => {
         const user = new User({ //crée un nouveau User avec le mdp crypté
           email: req.body.email,
           password: hash
         });
-        user.save()             //on stocke le mdp dans la base de données
-          .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-          .catch(error => res.status(400).json({ error }));
+        user.save() // Save the new user to the database
+          .then(() => res.status(201).json({ message: 'Utilisateur créé !' })) // Success message
+          .catch(error => res.status(400).json({ error })); // Error saving the user
       })
       .catch(error => res.status(500).json({ error }));
   };
+
 
   exports.login = (req, res, next) => {
     User.findOne({ email: req.body.email })
