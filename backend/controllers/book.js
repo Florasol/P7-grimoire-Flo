@@ -51,11 +51,12 @@ exports.getOneBook = (req, res, next) => {
 
   exports.rateBook = (req, res, next) => {
     console.log("rateBook controller called");
-    const ratingObject = { ...req.body, grade: req.body.rating }; // Stockage de la requête dans une constante
-    delete ratingObject._id; // Suppression du faux _id envoyé par le front
-
-    // Vérification que la note est dans les limites autorisées
-    if (req.body.rating >= 0 && req.body.rating <= 5) {
+    const ratingObject = {    // Stockage de la requête dans une constante
+        userId : `${req.body.userId}`,
+        grade : req.body.rating
+      } 
+    
+    if (req.body.rating >= 0 && req.body.rating <= 5) { // Vérification que la note est dans les limites autorisées
         console.log("Rating is valid:", req.body.rating);
 
         Book.findOne({ _id: req.params.id }) // Recherche du livre auquel on veut ajouter une note
@@ -81,13 +82,13 @@ exports.getOneBook = (req, res, next) => {
                     console.log("Average grade calculated:", averageGrades);  // Affichage de la moyenne calculée
 
                     // Mise à jour du livre avec les nouvelles notes et la nouvelle moyenne
-                    Book.updateOne(
-                        { _id: req.params.id }, 
-                        { ratings: newRatings, averageRating: averageGrades, _id: req.params.id }
-                        )
-                        .then(() => {
-                            console.log("Book updated successfully");
-                            res.status(200).json({ message: 'Les livres les mieux notés ont été actualisés avec succès !' });
+                    Book.findOneAndUpdate(
+                        { _id: req.params.id },
+                        { $push: { ratings: ratingObject }, $set: { averageRating: averageGrades } },
+                        { new: true } // S'assure de retourner le livre à jour
+                    )
+                        .then(updatedBook => {
+                            res.status(200).json(updatedBook); // Return the updated book data
                         })
                         .catch(error => {
                             console.log("Error updating book:", error); // Log d'erreur si échec de la mise à jour
@@ -106,13 +107,19 @@ exports.getOneBook = (req, res, next) => {
 };
 
 exports.getBestRatedBooks = (req, res, next) => {
-    Book.find().sort({ averageRating: -1 }).limit(3) // Requête à la base de données: Trie dans l'ordre décroissant, limité à 3 livres
-    .then(topRatedBooks => { // le résultat de la requête est placé dans la variable topRatedBooks
-      res.status(200).json(topRatedBooks);
+    Book.find({ averageRating: { $exists: true } }) // Ensure only books with averageRating are considered
+    .sort({ averageRating: -1 })
+    .limit(3)
+    .then(topRatedBooks => {
+        if (!topRatedBooks.length) {
+            res.status(404).json({ message: 'No books found' }); // Handling the case with no results
+        } else {
+            res.status(200).json(topRatedBooks);
+        }
     })
     .catch(error => {
-      console.error(error);
-      res.status(500).json({ error: 'Une erreur est survenue.' });
+        console.error('Error fetching top-rated books:', error);
+        res.status(500).json({ error: 'Une erreur est survenue lors de la récupération des livres les mieux notés.' });
     });
 };
 
