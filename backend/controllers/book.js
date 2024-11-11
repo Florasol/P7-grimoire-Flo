@@ -70,7 +70,7 @@ exports.getOneBook = (req, res, next) => {
                 // Vérification si l'utilisateur a déjà noté ce livre
                 if (userIdArray.includes(req.auth.userId)) {
                     console.log("User has already rated this book.");
-                    return res.status(403).json({ message: 'Not authorized' });
+                    return res.status(403).json({ message: 'Requête non autorisée' });
                 } else {
                     // Ajout de la nouvelle note
                     newRatings.push(ratingObject);
@@ -133,7 +133,7 @@ exports.modifyBook = (req, res, next) => {
   Book.findOne({_id: req.params.id}) // faire le lien entre l'utilisateur et son objet pour vérifier
       .then((book) => {
           if (book.userId != req.auth.userId) {
-              res.status(401).json({ message : 'Non-autorisé'});
+              res.status(401).json({ message : 'Requête non autorisée'});
           } else {
               Book.updateOne({ _id: req.params.id}, { ...bookObject, _id: req.params.id}) // si c'est le bon utilisateur, on met à jour l'enregistrement
               .then(() => res.status(200).json({message : 'Objet modifié!'}))
@@ -149,7 +149,7 @@ exports.deleteBook = (req, res, next) => {
   Book.findOne({ _id: req.params.id}) 
       .then(book => {
           if (book.userId != req.auth.userId) { // vérifier que ce soit le propriétaire qui demande la suppression
-              res.status(401).json({message: 'Not authorized'});
+              res.status(401).json({message: 'Non autorisé.'});
           } else {
               const filename = book.imageUrl.split('/images/')[1]; // on supprime l'objet mais aussi l'image
               fs.unlink(`images/${filename}`, () => {

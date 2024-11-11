@@ -40,7 +40,7 @@ function SignIn({ setUser }) {
       }
     } catch (err) {
       console.log(err);
-      setNotification({ error: true, message: err.message });
+      setNotification({ error: true, message: 'Paire login/mot de passe incorrecte.' });
       console.log('Some error occured during signing in: ', err);
     } finally {
       setIsLoading(false);
