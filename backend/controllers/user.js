@@ -6,13 +6,13 @@ const jwt = require('jsonwebtoken');
 
 exports.signup = (req, res, next) => {
 
-    bcrypt.hash(req.body.password, 10) // fonction qui crypte le mdp (10 fois exécution algo de hachage)
+    bcrypt.hash(req.body.password, 10)  // fonction qui crypte le mdp (10 fois exécution algo de hachage)
       .then(hash => {
-        const user = new User({ //crée un nouveau User avec le mdp crypté
+        const user = new User({         //crée un nouveau User d'après le modèle User avec le mdp crypté
           email: req.body.email,
           password: hash
         });
-        user.save() // Save the new user to the database
+        user.save()                     // Save the new user to the database
           .then(() => res.status(201).json({ message: 'Utilisateur créé !' })) // Success message
           .catch(error => res.status(400).json({ error })); // Error saving the user
       })

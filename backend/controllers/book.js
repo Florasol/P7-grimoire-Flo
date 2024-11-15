@@ -19,16 +19,16 @@ exports.getAllBooks = (req, res, next) => {
 
 exports.createBook = (req, res, next) => {
   const bookObject = JSON.parse(req.body.book);
-  delete bookObject._id;
-  delete bookObject._userId;
+  delete bookObject._id;        // le frontend renvoie un id inutile, on l'enlève du corps de la requête 
+  delete bookObject._userId;    // utiliser l'user ID qui vient du token d'authentification, plus sûr
   const book = new Book({
-      ...bookObject,
+      ...bookObject, // opérateur spread, copie tous les éléments de req.body
       userId: req.auth.userId,
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` // résoudre l'url complète de l'image
   });
 
-  book.save()
-  .then(() => { res.status(201).json({message: 'Objet enregistré !'})})
+  book.save() // la méthode save() enregistre l'objet dans la base
+  .then(() => { res.status(201).json({message: 'Livre enregistré !'})})
   .catch(error => { res.status(400).json( { error })})
 };
   
@@ -107,7 +107,7 @@ exports.getOneBook = (req, res, next) => {
 };
 
 exports.getBestRatedBooks = (req, res, next) => {
-    Book.find({ averageRating: { $exists: true } }) // Ensure only books with averageRating are considered
+    Book.find({ averageRating: { $exists: true } }) // On s'assure que la moyenne n'est pas "null", ou égale à 0
     .sort({ averageRating: -1 })
     .limit(3)
     .then(topRatedBooks => {
@@ -151,9 +151,9 @@ exports.deleteBook = (req, res, next) => {
           if (book.userId != req.auth.userId) { // vérifier que ce soit le propriétaire qui demande la suppression
               res.status(401).json({message: 'Non autorisé.'});
           } else {
-              const filename = book.imageUrl.split('/images/')[1]; // on supprime l'objet mais aussi l'image
+              const filename = book.imageUrl.split('/images/')[1];                          // on supprime l'objet mais aussi l'image
               fs.unlink(`images/${filename}`, () => {
-                  Book.deleteOne({_id: req.params.id})            // méthode appelée de manière asynchrone, on supprime le fichier de la base de données
+                  Book.deleteOne({_id: req.params.id})                                      // méthode appelée de manière asynchrone, on supprime le fichier de la base de données
                       .then(() => { res.status(200).json({message: 'Objet supprimé !'})})
                       .catch(error => res.status(401).json({ error }));
               });

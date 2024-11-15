@@ -14,8 +14,7 @@ mongoose.connect('mongodb+srv://floralusoler:RjVIcpqHvLqP8tCd@clusteroc.o6o5d.mo
 .catch(() => console.log('Connexion à MongoDB échouée !'));
 
 const app = express();
-// Extrait le corps JSON des requêtes POST
-app.use(express.json());
+app.use(express.json()); // Extrait le corps JSON des requêtes POST
 app.use(bodyParser.json());
 
 

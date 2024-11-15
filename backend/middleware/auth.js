@@ -7,7 +7,7 @@ module.exports = (req, res, next) => {
        const userId = decodedToken.userId; //on récupère la propriété userId du token décodé
        
        // Vérification supplémentaire de l'expiration
-       const isExpired = decodedToken.exp * 1000 < Date.now();
+       const isExpired = decodedToken.exp * 1000 < Date.now(); // l'heure actuelle est elle postérieure au moment ou le token a expiré ?
        if (isExpired) {
            return res.status(401).json({ message: 'Session expirée. Veuillez vous reconnecter.' });
        }
